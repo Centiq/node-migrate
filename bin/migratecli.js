@@ -63,16 +63,6 @@ var migrationCliHandlers = [
   }
 ];
 
-['file', 'mongo'].forEach(function(storeType) {
-  try {
-    var Store = require('node-migrate-' + storeType + 'store');
-    if (Store.cliHandler)
-      migrationCliHandlers.push(Store.cliHandler)
-  } catch(e) {
-    //ignore missing types
-  }
-});
-
 var usageArr = [
   ''
   , '  Usage: migrate [options] [command]'
@@ -143,6 +133,14 @@ while (args.length) {
       options.command = arg;
     }
   }
+}
+
+/**
+ * Make sure we never run 'migrate down' and destroy the database
+ */
+if(options.args.length == 0){
+  log("Error!", "You must supply a migration to move to");
+  return;
 }
 
 /**
