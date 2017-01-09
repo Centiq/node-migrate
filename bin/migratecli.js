@@ -65,7 +65,7 @@ var migrationCliHandlers = [
 
 ['file', 'mongo'].forEach(function(storeType) {
   try {
-    var Store = require('migrate-' + storeType + 'store');
+    var Store = require('node-migrate-' + storeType + 'store');
     if (Store.cliHandler)
       migrationCliHandlers.push(Store.cliHandler)
   } catch(e) {
@@ -224,7 +224,7 @@ function create(name) {
 
 function performMigration(direction, migrationName) {
   var storeType = options.store || 'file';
-  var Store = require('migrate-'  + storeType + 'store');
+  var Store = require('node-migrate-'  + storeType + 'store');
 
   var store = new (Function.prototype.bind.apply(Store, [null].concat(options)));
 
