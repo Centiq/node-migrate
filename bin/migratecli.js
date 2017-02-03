@@ -2,10 +2,10 @@
  * Module dependencies.
  */
 
-var migrate = require('../')
-  , join = require('path').join
-  , fs = require('fs')
-  , dateFormat = require('dateformat');
+var migrate = require('../'),
+  join = require('path').join,
+  fs = require('fs'),
+  dateFormat = require('dateformat');
 
 /**
  * Arguments.
@@ -17,7 +17,9 @@ var args = process.argv.slice(2);
  * Option defaults.
  */
 
-var options = { args: [] };
+var options = {
+  args: []
+};
 
 /**
  * Current working directory.
@@ -29,59 +31,44 @@ var cwd;
  * Usage information.
  */
 
-var migrationCliHandlers = [
-  {
-    usageOptions: [
-      '     -c, --chdir <path>      change the working directory'
-      , '     --template-file <path>  set path to template file to use for new migrations'
-      , '     --date-format <format>  set a date format to use for new migration filenames'
-      , '     --store <string>  select the db adapter to use: file (default) or mongo'
-    ],
-    parseArg    : function (arg) {
-      switch (arg) {
-        case '-h':
-        case '--help':
-        case 'help':
-          console.log(usage);
-          process.exit();
-          return true;
-        case '-c':
-        case '--chdir':
-          process.chdir(cwd = required());
-          return true;
-        case '--store':
-          options.store = required();
-          return true;
-        case '--template-file':
-          template = fs.readFileSync(required());
-          return true;
-        case '--date-format':
-          options.dateFormat = required();
-          return true;
-      }
+var migrationCliHandlers = [{
+  usageOptions: [
+    '     -c, --chdir <path>      change the working directory', '     --template-file <path>  set path to template file to use for new migrations', '     --date-format <format>  set a date format to use for new migration filenames', '     --store <string>  select the db adapter to use: file (default) or mongo'
+  ],
+  parseArg: function(arg) {
+    switch (arg) {
+      case '-h':
+      case '--help':
+      case 'help':
+        console.log(usage);
+        process.exit();
+        return true;
+      case '-c':
+      case '--chdir':
+        process.chdir(cwd = required());
+        return true;
+      case '--store':
+        options.store = required();
+        return true;
+      case '--template-file':
+        template = fs.readFileSync(required());
+        return true;
+      case '--date-format':
+        options.dateFormat = required();
+        return true;
     }
   }
-];
+}];
 
 var usageArr = [
-  ''
-  , '  Usage: migrate [options] [command]'
-  , ''
-  , '  Options:'
-  , ''];
+  '', '  Usage: migrate [options] [command]', '', '  Options:', ''
+];
 
-migrationCliHandlers.forEach(function (handler) {
+migrationCliHandlers.forEach(function(handler) {
   usageArr = usageArr.concat(handler.usageOptions)
 });
 
-usageArr = usageArr.concat([
-  , '  Commands:'
-  , ''
-  , '     down   [name]    migrate down till given migration'
-  , '     up     [name]    migrate up till given migration (the default command)'
-  , '     create [title]   create a new migration file with optional [title]'
-  , ''
-]);
+usageArr = usageArr.concat([, '  Commands:', '', '     down   [name]    migrate down till given migration', '     up     [name]    migrate up till given migration (the default command)', '     create [title]   create a new migration file with optional [title]', '']);
 var usage = usageArr.join('\n');
 
 /**
@@ -89,16 +76,7 @@ var usage = usageArr.join('\n');
  */
 
 var template = [
-  '\'use strict\''
-  , ''
-  , 'exports.up = function(next) {'
-  , '  next();'
-  , '};'
-  , ''
-  , 'exports.down = function(next) {'
-  , '  next();'
-  , '};'
-  , ''
+  '\'use strict\'', '', 'exports.up = function(next) {', '  next();', '};', '', 'exports.down = function(next) {', '  next();', '};', ''
 ].join('\n');
 
 // require an argument
@@ -120,7 +98,7 @@ var arg;
 while (args.length) {
   arg = args.shift();
   var optionKey;
-  for (var i = 0; i<migrationCliHandlers.length; i++) {
+  for (var i = 0; i < migrationCliHandlers.length; i++) {
     optionKey = migrationCliHandlers[i].parseArg(arg)
     if (optionKey)
       options[optionKey] = required();
@@ -138,7 +116,7 @@ while (args.length) {
 /**
  * Make sure we never run 'migrate down' and destroy the database
  */
-if(options.args.length == 0){
+if (options.args.length == 0) {
   log("Error!", "You must supply a migration to move to");
   return;
 }
@@ -175,7 +153,7 @@ var commands = {
    * up [name]
    */
 
-  up: function(migrationName){
+  up: function(migrationName) {
     performMigration('up', migrationName);
   },
 
@@ -183,7 +161,7 @@ var commands = {
    * down [name]
    */
 
-  down: function(migrationName){
+  down: function(migrationName) {
     performMigration('down', migrationName);
   },
 
@@ -191,9 +169,9 @@ var commands = {
    * create [title]
    */
 
-  create: function(){
-    var curr = Date.now()
-      , title = slugify([].slice.call(arguments).join(' '));
+  create: function() {
+    var curr = Date.now(),
+      title = slugify([].slice.call(arguments).join(' '));
     if (options.dateFormat) {
       curr = dateFormat(curr, options.dateFormat);
     }
@@ -222,25 +200,31 @@ function create(name) {
 
 function performMigration(direction, migrationName) {
   var storeType = options.store || 'file';
-  var Store = require('migrate-'  + storeType + 'store');
+  var Store = require('migrate-' + storeType + 'store');
 
-  var store = new (Function.prototype.bind.apply(Store, [null].concat(options)));
+  var store = new(Function.prototype.bind.apply(Store, [null].concat(options)));
 
   var set = migrate.load(store, 'migrations');
 
-  set.on('migration', function(migration, direction){
+  set.on('migration', function(migration, direction) {
     log(direction, migration.title);
   });
 
-  set[direction](migrationName, function (err) {
-    if (err) {
-      log('error', err);
-      process.exit(1);
-    }
+  try {
+    set[direction](migrationName, function(err) {
 
-    log('migration', 'complete');
-    process.exit(0);
-  });
+      if (err) {
+        log('error', err);
+        process.exit(1);
+      }
+
+      log('migration', 'complete');
+      process.exit(0);
+    });
+
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 // invoke command
@@ -249,4 +233,3 @@ var command = options.command || 'up';
 if (!(command in commands)) abort('unknown command "' + command + '"');
 command = commands[command];
 command.apply(this, options.args);
-
