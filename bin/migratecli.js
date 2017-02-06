@@ -116,7 +116,7 @@ while (args.length) {
 /**
  * Make sure we never run 'migrate down' and destroy the database
  */
-if (options.args.length == 0) {
+if (options.args.length == 0 && options.command != "status") {
   log("Error!", "You must supply a migration to move to");
   return;
 }
@@ -163,6 +163,13 @@ var commands = {
 
   down: function(migrationName) {
     performMigration('down', migrationName);
+  },
+
+  /**
+   * status
+   */
+  status: function(migrationName) {
+    showMigrationsStatus();
   },
 
   /**
@@ -225,6 +232,28 @@ function performMigration(direction, migrationName) {
   } catch (e) {
     console.log(e);
   }
+}
+
+function showMigrationsStatus(){
+  var storeType = options.store || 'file';
+  var Store = require('migrate-' + storeType + 'store');
+
+  var store = new(Function.prototype.bind.apply(Store, [null].concat(options)));
+
+  var set = migrate.load(store, 'migrations');
+
+  set.loadNet(function(err, data){
+    if(err){
+      console.log(err);
+      return;
+    }
+    
+    for (var i = 0; i < data.length; i++) {
+      log(i, data[i])
+    }
+
+    process.exit(0);
+  });
 }
 
 // invoke command
